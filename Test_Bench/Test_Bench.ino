@@ -37,13 +37,27 @@ void loop()
   // Iteration
   iteration();
 
-  // Reads the transducer (10 kHz)
   #if TRANSDUCER == 1 
-    if ((micros() - last_transducer) > transducer_timer)
+    // Reads the transducer (10 kHz)
+    if ((transducer_enabled) && ((micros() - last_transducer) > 100))
     {
       transducer_measure();
+      ++transducer_freq;
       last_transducer = micros();
     }
+
+    // Prints the transducer freq
+    #if FREQD == 1
+      if ((transducer_enabled) && ((millis() - last_transducer_freq) > 1000))
+      {
+        Serial.println();
+        Serial.print("Transducer freq : ");
+        Serial.println(transducer_freq);
+
+        last_transducer_freq = millis();
+        transducer_freq = 0;
+      }
+    #endif
   #endif  
   
   // Turns on the led after one second (Normally because an orden has been sent)
@@ -55,10 +69,16 @@ void loop()
   
   // Turns off relay after 5 secs
   #if RELAY == 1 
-    if (ignition_started && (millis() - last_ignition > ignition_timer)) 
+    if (ignition_started)
     {
-      ignition_started = false;
-      power_relay(false);
-    }
+      relay_warning();
+      if (millis() - last_ignition > ignition_timer)
+      {
+        ignition_started = false;
+        power_relay(false);
+        digitalWrite(PIN_LED, true);
+      }
+    }  
   #endif  
+
 }

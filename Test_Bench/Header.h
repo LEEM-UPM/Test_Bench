@@ -7,11 +7,11 @@
 
 #define TRANSDUCER                 1
 #define FREQD                      0
-#define RADIO                      1
-#define BMP_280                    1
+#define RADIO                      0
+#define BMP_280                    0
 #define SD_READER                  1
 #define W_CELL                     1
-#define DHT_22                     1
+#define DHT_22                     0
 #define RELAY                      1
 
 //-------------------------------------------------
@@ -57,11 +57,13 @@ const uint8_t serialID[] = {0xFE, 0xFB};
 float sec = 0;
 uint32_t time_rn = 0;
 uint32_t last_time = 0;
-uint32_t last_freq = 0;
+uint32_t last_cell_freq = 0;
+uint32_t last_transducer_freq = 0;
 uint32_t last_reset = 0;
 uint32_t last_transducer = 0;
 uint32_t last_DHT = 0;
 uint32_t last_LED = 0;
+uint32_t last_relay_LED = 0;
 uint32_t last_ignition = 0;
 
 // Serial
@@ -92,11 +94,10 @@ String file_pressure_name = "_Presion.txt";
 // Modes
 bool receiving = false;
 bool tared = false;
-bool testMode = true;
 bool performance_started = false;
 
 // Cell Variables
-const float cell_f = (5*2.5)/(1024*175);
+const float cell_f = -(5*2.5)/(1024*175);
 
 uint16_t cell_freq = 0;
 float cell_thrust = 0;
@@ -106,8 +107,10 @@ const uint32_t transducer_timer = 100;
 const float transducer_max_pressure = 343.7 / 200;
 const float transducer_max_voltage = 620;
 
+bool transducer_enabled = true;
 uint16_t transducer_raw = 0;
 uint16_t transducer_counter = 0;
+uint16_t transducer_freq = 0;
 float transducer_offset = 0;
 float transducer_avg = 0;
 float transducer_pressure = 0;
@@ -127,6 +130,7 @@ float DHT_temp = 0;
 const uint32_t ignition_timer = 5000;
 
 bool ignition_started = false;
+bool relay_LED_status = true;
 
 // Led variables
 const uint32_t LED_timer = 1000;
@@ -175,6 +179,7 @@ void iteration();
 void performance();
 void performance_finished();
 void power_relay(bool);
+void relay_warning();
 void error_warning();
 void transducer_set_offset();
 void transducer_measure();

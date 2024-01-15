@@ -75,16 +75,17 @@ void obey_order(uint8_t order)
   {
     // Conexion established
     case 1:  
+      transducer_enabled = true;
     break;
 
-    // Testing
+    // Transducer activated
     case 2:  
-      testMode = true;
+      transducer_enabled = true;
     break;
 
-    // Performing
+    // Transducer deactivated
     case 3:  
-      testMode = false;
+      transducer_enabled = false;
     break;
 
     // Reboot
@@ -125,6 +126,12 @@ void obey_order(uint8_t order)
         ignition_started = true;
         last_ignition = millis();
       #endif
+    break;
+
+    case 16:
+      #if TRANSDUCER == 1
+        transducer_set_offset();
+      #endif    
     break;
   }
 }

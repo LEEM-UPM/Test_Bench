@@ -7,11 +7,11 @@
 
 #define TRANSDUCER                 1
 #define FREQD                      0
-#define RADIO                      0
+#define RADIO                      1
 #define BMP_280                    0
 #define SD_READER                  1
 #define W_CELL                     1
-#define DHT_22                     0
+#define DHT_22                     1
 #define RELAY                      1
 
 //-------------------------------------------------
@@ -19,6 +19,7 @@
 //-------------------------------------------------
 
 #define XBEE_COM                   Serial8
+#define PIN_ALARM                  2
 #define PIN_RELAY                  3
 #define PIN_DHT                    4
 #define PIN_LED                    13
@@ -43,8 +44,8 @@
 #include <HX711.h>
 
 // SD
-#include "SdFat.h"
-#include "RingBuf.h"
+#include <SdFat.h>
+#include <RingBuf.h>
 
 //-------------------------------------------------
 //                   VARIABLES
@@ -57,14 +58,21 @@ const uint8_t serialID[] = {0xFE, 0xFB};
 float sec = 0;
 uint32_t time_rn = 0;
 uint32_t last_time = 0;
+uint32_t last_reset = 0;
 uint32_t last_cell_freq = 0;
 uint32_t last_transducer_freq = 0;
-uint32_t last_reset = 0;
 uint32_t last_transducer = 0;
 uint32_t last_DHT = 0;
 uint32_t last_LED = 0;
-uint32_t last_relay_LED = 0;
 uint32_t last_ignition = 0;
+uint32_t last_alarm = 0;
+
+// Timers
+const uint32_t transducer_timer = 100;
+const uint32_t DHT_timer = 1000;
+const uint32_t ignition_timer = 5000;
+const uint32_t LED_timer = 1000;
+const uint32_t alarm_timer = 1000;
 
 // Serial
 const uint16_t serialSize = 500;
@@ -97,13 +105,12 @@ bool tared = false;
 bool performance_started = false;
 
 // Cell Variables
-const float cell_f = -(5*2.5)/(1024*175);
+const float cell_f = (5*2.5)/(1024*175);
 
 uint16_t cell_freq = 0;
 float cell_thrust = 0;
 
 // Transducer variables
-const uint32_t transducer_timer = 100;
 const float transducer_max_pressure = 343.7 / 200;
 const float transducer_max_voltage = 620;
 
@@ -121,21 +128,17 @@ float BMP_pressure = 0;
 float BMP_ref_pressure = 0;
 
 // DHT22 variables
-const uint32_t DHT_timer = 1000;
-
 float DHT_hum = 0;
 float DHT_temp = 0;
 
 // Ignition variables
-const uint32_t ignition_timer = 5000;
-
 bool ignition_started = false;
-bool relay_LED_status = true;
 
 // Led variables
-const uint32_t LED_timer = 1000;
-
 bool LED_started = true;
+
+// Alarm variables
+bool alarm_status = false;
 
 //-------------------------------------------------
 //                  CONFIGURATION    

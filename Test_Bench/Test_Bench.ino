@@ -22,6 +22,9 @@ void setup()
   // Relay
   pinMode(PIN_RELAY, OUTPUT);
 
+  // Alarm
+  pinMode(PIN_ALARM, OUTPUT);
+
   // Sensor start
   sensor_init();
 
@@ -69,15 +72,11 @@ void loop()
   
   // Turns off relay after 5 secs
   #if RELAY == 1 
-    if (ignition_started)
+    if ((ignition_started) && (millis() - last_ignition > ignition_timer))
     {
-      relay_warning();
-      if (millis() - last_ignition > ignition_timer)
-      {
-        ignition_started = false;
-        power_relay(false);
-        digitalWrite(PIN_LED, true);
-      }
+      ignition_started = false;
+      power_relay(false);
+      digitalWrite(PIN_LED, true);
     }  
   #endif  
 

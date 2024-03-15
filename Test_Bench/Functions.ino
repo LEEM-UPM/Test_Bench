@@ -134,16 +134,7 @@ void performance_finished()
 void power_relay(bool status)
 {
   digitalWrite(PIN_RELAY, !status);
-} 
-
-void relay_warning()
-{
-  if (millis() - last_relay_LED > 100)
-  {
-    relay_LED_status = !relay_LED_status;
-    digitalWrite(PIN_LED, relay_LED_status);
-    last_relay_LED = millis();
-  }  
+  digitalWrite(PIN_ALARM, status);
 } 
 
 //-------------------------------------------------
@@ -185,8 +176,8 @@ void transducer_measure()
   // Read analog pin and change it to bars
   transducer_raw = analogRead(PIN_TRANSDUCER);
 
-  transducer_pressure = ((transducer_raw / transducer_max_voltage) * 250 - transducer_offset);
-
+  transducer_pressure = (transducer_raw / transducer_max_voltage) * 250 - transducer_offset;
+  
   transducer_avg += transducer_pressure;
   ++transducer_counter;
 
@@ -250,7 +241,7 @@ void pack_change()
   float_to_byte(cell_thrust, 9);
 
   // Transducer data
-  float true_pressure = (transducer_avg / transducer_counter) * transducer_max_pressure;
+  float true_pressure = transducer_avg / transducer_counter;
   float_to_byte(true_pressure, 13);
   transducer_avg = 0;
   transducer_counter = 0;

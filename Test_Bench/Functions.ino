@@ -133,7 +133,7 @@ void performance_finished()
 
 void power_relay(bool status)
 {
-  digitalWrite(PIN_RELAY, !status);
+  digitalWrite(PIN_RELAY, status);
   digitalWrite(PIN_ALARM, status);
 } 
 

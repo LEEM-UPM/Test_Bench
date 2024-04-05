@@ -52,16 +52,16 @@ void send_order(uint8_t order)
 { 
   #if RADIO == 1
     XBEE_COM.write(serialID, 2);
-    XBEE_COM.write(0);
     XBEE_COM.write(order + 3);
+    XBEE_COM.write(0);
     XBEE_COM.write(2);
     XBEE_COM.write(1);
     XBEE_COM.write(order);
     XBEE_COM.flush();
   #else
     Serial.write(serialID, 2);
-    Serial.write(0);
     Serial.write(order + 3);
+    Serial.write(0);
     Serial.write(2);
     Serial.write(1);
     Serial.write(order);

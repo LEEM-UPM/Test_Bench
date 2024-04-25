@@ -79,7 +79,7 @@ uint32_t last_ignition = 0;
 uint32_t last_alarm = 0;
 
 // Timers
-const uint32_t transducer_timer = 100;
+const uint32_t transducer_timer = 10;
 const uint32_t DHT_timer = 1000;
 const uint32_t ignition_timer = 5000;
 const uint32_t LED_timer = 1000;
@@ -185,7 +185,7 @@ bool alarm_status = false;
 #endif
 
 // Transducer
-#if TRANSDUCER == 1
+#if TRANSDUCER == 12
   ADC *adc = new ADC();
   adc->adc0->setAveraging(8); // set number of averages
   adc->adc0->setResolution(12); // set bits of resolution
@@ -193,7 +193,7 @@ bool alarm_status = false;
   DMAChannel dma(true);
   DMAMEM static volatile uint16_t __attribute__((aligned(32))) buffer_pressure[RB_size];
   AnalogBufferDMA analog_buffer_pressure(analogBuffer, RB_size);
-#else
+#endif
 
 //-------------------------------------------------
 //                    FUNCTIONS   

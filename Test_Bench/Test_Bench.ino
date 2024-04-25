@@ -43,20 +43,19 @@ void loop()
     // Reads the transducer (10 kHz)
     if ((transducer_enabled) && ((micros() - last_transducer) > 100))
     {
+      last_transducer = micros();
       transducer_measure();
       ++transducer_freq;
-      last_transducer = micros();
     }
 
     // Prints the transducer freq
     #if FREQD == 1
       if ((transducer_enabled) && ((millis() - last_transducer_freq) > 1000))
       {
+        last_transducer_freq = millis();
         Serial.println();
         Serial.print("Transducer freq : ");
         Serial.println(transducer_freq);
-
-        last_transducer_freq = millis();
         transducer_freq = 0;
       }
     #endif

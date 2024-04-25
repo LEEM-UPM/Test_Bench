@@ -1,5 +1,5 @@
-#ifndef HEADER_H
-#define HEADER_H
+#ifndef CONFIG_H
+#define CONFIG_H
 
 //-------------------------------------------------
 //              SENSORS AND MODULES
@@ -7,7 +7,7 @@
 
 #define TRANSDUCER                 1
 #define FREQD                      0
-#define RADIO                      0
+#define RADIO                      1
 #define BMP_280                    0
 #define SD_READER                  1
 #define W_CELL                     1
@@ -18,7 +18,12 @@
 //                      PINS
 //-------------------------------------------------
 
-#define XBEE_COM                   Serial8
+#if RADIO == 1
+#define RADIO_OUT                   Serial8
+#else 
+#define RADIO_OUT                   Serial
+#endif
+
 #define PIN_ALARM                  2
 #define PIN_RELAY                  3
 #define PIN_DHT                    4
@@ -46,6 +51,12 @@
 // SD
 #include <SdFat.h>
 #include <RingBuf.h>
+
+// Transducer
+#include <ADC.h>
+#include <DMAChannel.h>
+#include <AnalogBufferDMA.h>
+#include <FreeStack.h>
 
 //-------------------------------------------------
 //                   VARIABLES
@@ -92,7 +103,7 @@ byte wholePack[miniPackSize * packSize] = {0};
 
 // SD
 const uint32_t RB_size = 400 * 512;
-const uint32_t file_size = 10 * 25000 * 600;
+const uint32_t file_size = 10 * 100000 * 600;
 
 bool file_closed = true;
 bool SD_ready = true;
@@ -172,6 +183,17 @@ bool alarm_status = false;
     RingBuf<FsFile, RB_size> RB_pressure;
   #endif
 #endif
+
+// Transducer
+#if TRANSDUCER == 1
+  ADC *adc = new ADC();
+  adc->adc0->setAveraging(8); // set number of averages
+  adc->adc0->setResolution(12); // set bits of resolution
+
+  DMAChannel dma(true);
+  DMAMEM static volatile uint16_t __attribute__((aligned(32))) buffer_pressure[RB_size];
+  AnalogBufferDMA analog_buffer_pressure(analogBuffer, RB_size);
+#else
 
 //-------------------------------------------------
 //                    FUNCTIONS   

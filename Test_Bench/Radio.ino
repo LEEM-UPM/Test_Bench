@@ -1,30 +1,17 @@
 void data_deliver()
 {
-  #if RADIO == 1
-    XBEE_COM.write(wholePack, wholePackSize);
-    XBEE_COM.flush();
-  #else
-    Serial.write(wholePack, wholePackSize);
-    Serial.flush();
-  #endif  
+  RADIO_OUT.write(wholePack, wholePackSize);
+  RADIO_OUT.flush();
 }
 
 void serial_read()
 {
   // Detects anything in Serial
-  #if RADIO == 1
-    if (XBEE_COM.available()) 
-    {
-      length = XBEE_COM.readBytesUntil('\n', serialBuffer, serialSize);
-      receiving = true;   
-    }
-  #else
-    if (Serial.available()) 
-    {
-      length = Serial.readBytesUntil('\n', serialBuffer, serialSize);
-      receiving = true;   
-    }
-  #endif
+  if (RADIO_OUT.available()) 
+  {
+    length = RADIO_OUT.readBytesUntil('\n', serialBuffer, serialSize);
+    receiving = true;  
+  }
 
   // Process serial
   if (receiving)
@@ -50,23 +37,13 @@ void serial_read()
 
 void send_order(uint8_t order) 
 { 
-  #if RADIO == 1
-    XBEE_COM.write(serialID, 2);
-    XBEE_COM.write(order + 3);
-    XBEE_COM.write(0);
-    XBEE_COM.write(2);
-    XBEE_COM.write(1);
-    XBEE_COM.write(order);
-    XBEE_COM.flush();
-  #else
-    Serial.write(serialID, 2);
-    Serial.write(order + 3);
-    Serial.write(0);
-    Serial.write(2);
-    Serial.write(1);
-    Serial.write(order);
-    Serial.flush();
-  #endif  
+  RADIO_OUT.write(serialID, 2);
+  RADIO_OUT.write(order + 3);
+  RADIO_OUT.write(0);
+  RADIO_OUT.write(2);
+  RADIO_OUT.write(1);
+  RADIO_OUT.write(order);
+  RADIO_OUT.flush();
 }
 
 void obey_order(uint8_t order)

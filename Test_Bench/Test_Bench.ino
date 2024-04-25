@@ -14,10 +14,9 @@ void setup()
 
   // Communications
   Wire.begin();
-  Serial.begin(230400);
 
   // Radio
-  XBEE_COM.begin(230400);
+  RADIO_OUT.begin(230400);
 
   // Relay
   pinMode(PIN_RELAY, OUTPUT);

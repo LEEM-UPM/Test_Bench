@@ -45,6 +45,14 @@ void sensor_init()
   // Transducer start
   #if TRANSDUCER == 1
     transducer_set_offset();
+    adc->adc0->setAveraging(8); // set number of averages
+    adc->adc0->setResolution(12); // set bits of resolution
+    abdma1.init(adc, ADC_0/*, DMAMUX_SOURCE_ADC_ETC*/);
+    abdma1.userData(initial_average_value); // save away initial starting average
+    AnalogBufferDMA.init(adc, ADC_0/*, DMAMUX_SOURCE_ADC_ETC*/);
+    AnalogBufferDMA.userData(initial_average_value); // save away initial starting average
+    adc->adc0->startSingleRead(readPin_adc_0); // call this to setup everything before the Timer starts, differential is also possible
+    adc->adc0->startTimer(3000); //frequency in Hz
   #endif
 
   if (error) error_warning();
@@ -220,8 +228,8 @@ void data_measure()
 union byteConverter
 {
 	float floatP;
-  int intP;
-	byte byteP[4];
+  uint16_t intP;
+	uint8_t byteP[4];
 };
 
 void pack_header()

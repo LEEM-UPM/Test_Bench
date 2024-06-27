@@ -5,9 +5,10 @@
 //              SENSORS AND MODULES
 //-------------------------------------------------
 
+#define USE_ADC_0
 #define TRANSDUCER                 1
 #define FREQD                      0
-#define RADIO                      1
+#define RADIO                      0
 #define BMP_280                    0
 #define SD_READER                  1
 #define W_CELL                     1
@@ -54,6 +55,7 @@
 
 // Transducer
 #include <ADC.h>
+#include <ADC_util.h>
 #include <DMAChannel.h>
 #include <AnalogBufferDMA.h>
 #include <FreeStack.h>
@@ -69,10 +71,10 @@ const uint8_t serialID[] = {0xFE, 0xFB};
 float sec = 0;
 uint32_t time_rn = 0;
 uint32_t last_time = 0;
-uint32_t last_reset = 0;
+uint32_t last_reset_millis = 0;
+uint32_t last_reset_micros = 0;
 uint32_t last_cell_freq = 0;
 uint32_t last_transducer_freq = 0;
-uint32_t last_transducer = 0;
 uint32_t last_DHT = 0;
 uint32_t last_LED = 0;
 uint32_t last_ignition = 0;
@@ -113,7 +115,7 @@ String file_pressure_name = "_Presion.txt";
 // Modes
 bool receiving = false;
 bool tared = false;
-bool performance_started = false;
+bool performance_status = false;
 
 // Cell Variables
 const float cell_f = (5*2.5)/(1024*175);
@@ -122,16 +124,20 @@ uint16_t cell_freq = 0;
 float cell_thrust = 0;
 
 // Transducer variables
-const float transducer_max_pressure = 343.7 / 200;
-const float transducer_max_voltage = 620;
+const uint16_t transducer_max_pressure = 250;
+const uint16_t transducer_min_value = 496;
+const uint16_t transducer_max_value = 2482;
+const float transducer_const = transducer_max_pressure / (transducer_max_value - transducer_min_value);
+
+volatile uint32_t transducer_counter = 0;
+volatile uint32_t transducer_freq = 0;
+
+volatile uint16_t transducer_raw = 0;
+volatile float transducer_avg = 0;
+volatile float transducer_pressure = 0;
 
 bool transducer_enabled = true;
-uint16_t transducer_raw = 0;
-uint16_t transducer_counter = 0;
-uint16_t transducer_freq = 0;
 float transducer_offset = 0;
-float transducer_avg = 0;
-float transducer_pressure = 0;
 
 // BMP280 variables
 float BMP_temp = 0;
@@ -185,14 +191,8 @@ bool alarm_status = false;
 #endif
 
 // Transducer
-#if TRANSDUCER == 12
+#if TRANSDUCER == 1
   ADC *adc = new ADC();
-  adc->adc0->setAveraging(8); // set number of averages
-  adc->adc0->setResolution(12); // set bits of resolution
-
-  DMAChannel dma(true);
-  DMAMEM static volatile uint16_t __attribute__((aligned(32))) buffer_pressure[RB_size];
-  AnalogBufferDMA analog_buffer_pressure(analogBuffer, RB_size);
 #endif
 
 //-------------------------------------------------
@@ -202,6 +202,7 @@ bool alarm_status = false;
 void sensor_init();
 void iteration();
 void performance();
+void performance_started();
 void performance_finished();
 void power_relay(bool);
 void relay_warning();

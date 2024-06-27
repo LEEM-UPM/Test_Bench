@@ -16,7 +16,7 @@ void setup()
   Wire.begin();
 
   // Radio
-  RADIO_OUT.begin(230400);
+  RADIO_OUT.begin(460800);
 
   // Relay
   pinMode(PIN_RELAY, OUTPUT);
@@ -29,6 +29,8 @@ void setup()
 
   // Cell pin
   pinMode(HX_DOUT, INPUT);
+
+  file_open();
 }
 
 void loop() 
@@ -39,26 +41,19 @@ void loop()
   // Iteration
   iteration();
 
-  #if TRANSDUCER == 1 
-    // Reads the transducer (10 kHz)
-    if ((transducer_enabled) && ((micros() - last_transducer) > 100))
+  // Prints the transducer freq
+  #if TRANSDUCER == 1 && FREQD == 1
+    if ((transducer_enabled) && ((millis() - last_transducer_freq) > 1000))
     {
-      last_transducer = micros();
-      transducer_measure();
-      ++transducer_freq;
-    }
+      last_transducer_freq = millis();
+      Serial.println();
+      Serial.print("Transducer freq : ");
 
-    // Prints the transducer freq
-    #if FREQD == 1
-      if ((transducer_enabled) && ((millis() - last_transducer_freq) > 1000))
-      {
-        last_transducer_freq = millis();
-        Serial.println();
-        Serial.print("Transducer freq : ");
-        Serial.println(transducer_freq);
-        transducer_freq = 0;
-      }
-    #endif
+      noInterrupts();
+      Serial.println(transducer_freq);
+      transducer_freq = 0;
+      interrupts();
+    }
   #endif  
   
   // Turns on the led after one second (Normally because an orden has been sent)

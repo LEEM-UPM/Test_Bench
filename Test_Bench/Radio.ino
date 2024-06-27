@@ -77,7 +77,7 @@ void obey_order(uint8_t order)
         cell.tare(255);
       #endif  
       #if TRANSDUCER == 1
-        transducer_set_offset();
+        //transducer_set_offset();
       #endif       
       tared = true;
       send_order(7);
@@ -85,10 +85,7 @@ void obey_order(uint8_t order)
     
     // Start performing
     case 8:  
-      performance_started = true;
-      if (file_open()) error_warning();
-      wholePackSize = miniPackSize * packSize;
-      delay(1000);
+      performance_started();
     break;
 
     // Stop performing

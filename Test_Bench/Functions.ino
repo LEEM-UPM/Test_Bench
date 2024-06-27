@@ -25,11 +25,6 @@ void sensor_init()
   // Cell start
   #if W_CELL == 1
     cell.begin(HX_DOUT, HX_SCK);
-    if (!cell.is_ready())
-    {
-      send_order(13);
-      error = true;
-    }
   #endif
 
   // SD Start
@@ -44,15 +39,13 @@ void sensor_init()
 
   // Transducer start
   #if TRANSDUCER == 1
-    transducer_set_offset();
-    //adc->adc0->setAveraging(8); // set number of averages
-    //adc->adc0->setResolution(12); // set bits of resolution
-    //abdma1.init(adc, ADC_0/*, DMAMUX_SOURCE_ADC_ETC*/);
-    //abdma1.userData(initial_average_value); // save away initial starting average
-    //AnalogBufferDMA.init(adc, ADC_0/*, DMAMUX_SOURCE_ADC_ETC*/);
-    //AnalogBufferDMA.userData(initial_average_value); // save away initial starting average
-    //adc->adc0->startSingleRead(readPin_adc_0); // call this to setup everything before the Timer starts, differential is also possible
-    //adc->adc0->startTimer(3000); //frequency in Hz
+    //transducer_set_offset();
+    adc->adc0->setAveraging(8);
+    adc->adc0->setResolution(12); // set bits of resolution
+    adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED); // change the conversion speed
+    adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED); // change the sampling speed
+
+    transducer_set_high_speed(false);
   #endif
 
   if (error) error_warning();
@@ -71,7 +64,7 @@ void iteration()
 
   time_rn = millis();
 
-  if (performance_started)
+  if (performance_status)
   {
     // Performance
     performance(); 
@@ -120,6 +113,17 @@ void performance()
   file_data_update();
 }
 
+void performance_started()
+{
+  performance_status = true;
+  wholePackSize = miniPackSize * packSize;
+
+  if (file_open()) error_warning();
+  delay(4000);
+
+  transducer_set_high_speed(true);
+}
+
 void performance_finished()
 {
   #if SD_READER == 1
@@ -127,12 +131,16 @@ void performance_finished()
   #endif
 
   power_relay(false);
-  performance_started = false;
+  transducer_set_high_speed(false);
+  
+  performance_status = false;
   ignition_started = false;
   tared = false;
   wholePackSize = miniPackSize;
   packPos = 0;
-  last_reset = millis();
+
+  last_reset_millis = millis();
+  last_reset_millis = last_reset_millis / 1000.;
 }
 
 //-------------------------------------------------
@@ -164,33 +172,59 @@ void error_warning()
 //                    TRANSDUCER
 //-------------------------------------------------
 
+void transducer_set_high_speed(bool enable)
+{
+  #if TRANSDUCER == 1
+    adc->adc0->stopTimer();
+    adc->adc0->startSingleRead(PIN_TRANSDUCER); // call this to setup everything before the Timer starts, differential is also possible
+    adc->adc0->enableInterrupts(transducer_measure);
+
+    if (!enable)
+    {
+      adc->adc0->setAveraging(100); // set number of averages
+      adc->adc0->startTimer(10000); //frequency in Hz
+    }
+    else
+    {
+      adc->adc0->setAveraging(4); // set number of averages
+      adc->adc0->startTimer(1000000 / transducer_timer); //frequency in Hz
+    }
+  #endif
+}
+
 void transducer_set_offset()
 {
-  // Read and get the average
-  uint32_t transducer_sum = 0;
+  #if TRANSDUCER == 2
+    // Read and get the average
+    uint32_t transducer_sum = 0;
 
-  for (int i = 0; i < 500; ++i)
-  {
-    transducer_sum += analogRead(PIN_TRANSDUCER);
-    delay(1);
-  }
-
-  transducer_offset = transducer_sum / (transducer_max_voltage * 500) * 250;
-
+    for (int i = 0; i < 500; ++i)
+    {
+      transducer_sum += analogRead(PIN_TRANSDUCER);
+      delay(1);
+    }
+    
+    transducer_offset = transducer_sum / (transducer_max_value * 500) * 250;
+  #endif  
 }
 
 void transducer_measure()
 {
-  // Read analog pin and change it to bars
-  transducer_raw = analogRead(PIN_TRANSDUCER);
+  #if TRANSDUCER == 1
+    // Read analog pin and change it to bars
+    transducer_raw = adc->adc0->readSingle();
 
-  transducer_pressure = (transducer_raw / transducer_max_voltage) * 250 - transducer_offset;
-  
-  transducer_avg += transducer_pressure;
-  ++transducer_counter;
+    transducer_pressure = transducer_raw * transducer_const - transducer_offset;
+    
+    transducer_avg += transducer_pressure;
+    ++transducer_counter;
+    ++transducer_freq;
 
-  // Write in SD
-  if (performance_started) file_pressure_update();
+    // Write in SD
+    if (performance_status) file_pressure_update();
+    //file_pressure_update();
+    
+  #endif
 }
 
 //-------------------------------------------------
@@ -200,7 +234,7 @@ void transducer_measure()
 void data_measure()
 {
   // Time 
-  sec = (millis() - last_reset) / 1000.;
+  sec = (millis() - last_reset_millis) / 1000.;
 
   // BMP280
   #if BMP_280 == 1
@@ -221,7 +255,6 @@ void data_measure()
   // Cell
   #if W_CELL == 1
     cell_thrust = cell_f * cell.get_value(1);
-    if (cell_thrust < 0) cell_thrust = 0;
   #endif
 }
 
@@ -248,9 +281,11 @@ void pack_change()
   // Cell data
   float_to_byte(cell_thrust, 9);
 
-  // Transducer data
-  float true_pressure = transducer_avg / transducer_counter;
-  float_to_byte(true_pressure, 13);
+  // Transducer data  
+  noInterrupts();
+  float_to_byte(transducer_avg / transducer_counter, 13);
+  interrupts();
+  
   transducer_avg = 0;
   transducer_counter = 0;
 
@@ -296,11 +331,13 @@ void file_data_update()
     RB_data.print(", ");
 
     // Transducer data (Average)
-    float true_pressure = (transducer_avg / transducer_counter) * transducer_max_pressure;
+    noInterrupts();
+    RB_data.print(transducer_avg / transducer_counter, 5);
+    RB_data.print(", ");
+    interrupts();
+
     transducer_avg = 0;
     transducer_counter = 0;
-    RB_data.print(true_pressure, 5);
-    RB_data.print(", ");
 
     // BMP280 data
     RB_data.print(BMP_temp);
@@ -326,24 +363,35 @@ void file_pressure_update()
     if (!SD_ready) {return;}
 
     // Transducer time (in s)
-    float transducer_time = (micros() / 1000. - last_reset) / 1000.;
-    RB_pressure.print(transducer_time, 5);
+    float transducer_time = micros() / 10000000. - last_reset_micros;
+    RB_pressure.print(transducer_time, 6);
     RB_pressure.print(", ");
 
     // Transducer measure already converted
-    RB_pressure.print(transducer_pressure * transducer_max_pressure);
+    RB_pressure.print(transducer_pressure);
     RB_pressure.print(", ");
 
-    // Raw transducer data
-    RB_pressure.println(transducer_raw);
+    // Raw transducer data    RB_pressure.println(transducer_raw);
 
+    Serial.println();
+    Serial.print("rb.bytesUsed() = ");
+    Serial.println(RB_pressure.bytesUsed());
+    Serial.println();
+
+    Serial.print("condicion 1 = ");
+    Serial.println(RB_pressure.bytesUsed() >= 512);
+
+    Serial.print("condicion 2 = ");
+    Serial.println(!file_pressure.isBusy());
     // Write it in the round buffer
-    size_t n = RB_pressure.bytesUsed();
-    if (n >= 512 && !file_pressure.isBusy())
+    if (RB_pressure.bytesUsed() >= 512 && !file_pressure.isBusy())
     {
       RB_pressure.writeOut(512);
     }
-  #endif  
+
+    Serial.println("d");
+    Serial.println(RB_pressure.getWriteError());
+  #endif   
 }
 
 void file_close()
@@ -395,15 +443,15 @@ bool file_open()
 
     file_closed = false;
 
+    // File header
+    file_data.println("Time, Thrust, Chamber_Pressure, BMP_Temperatura, BMP_Pressure, DHT_Humidity");
+
     // Allocate space to avoid huge delays
     file_data.preAllocate(file_size); 
 
     // Starts the Ring Buffs
     RB_data.begin(&file_data);
-
-    // File header
-    file_data.println("Time, Thrust, Chamber_Pressure, BMP_Temperatura, BMP_Pressure, DHT_Humidity");
-
+    
     #if TRANSDUCER == 1
       file_pressure.println("Time, Chamber_Pressure, Raw_Transducer");
       file_pressure.preAllocate(file_size);

@@ -8,7 +8,7 @@
 #define USE_ADC_0
 #define TRANSDUCER                 1
 #define FREQD                      0
-#define RADIO                      0
+#define RADIO                      1
 #define BMP_280                    0
 #define SD_READER                  1
 #define W_CELL                     1
@@ -32,6 +32,8 @@
 #define HX_DOUT                    14
 #define HX_SCK                     15
 #define PIN_TRANSDUCER             A2
+
+#define BREDA_ADDRESS              0x35
 
 //-------------------------------------------------
 //                   LIBRARIES
@@ -157,6 +159,14 @@ bool LED_started = true;
 // Alarm variables
 bool alarm_status = false;
 
+enum bredaOrders
+{
+  ensayoStarted = 1,
+  ensayoFinished,
+  relayON,
+  relayOFF
+};
+
 //-------------------------------------------------
 //                  CONFIGURATION    
 //-------------------------------------------------
@@ -194,32 +204,5 @@ bool alarm_status = false;
 #if TRANSDUCER == 1
   ADC *adc = new ADC();
 #endif
-
-//-------------------------------------------------
-//                    FUNCTIONS   
-//-------------------------------------------------
-
-void sensor_init();
-void iteration();
-void performance();
-void performance_started();
-void performance_finished();
-void power_relay(bool);
-void relay_warning();
-void error_warning();
-void transducer_set_offset();
-void transducer_measure();
-void data_measure();
-void pack_header();
-void pack_change();
-void float_to_byte(float, int);
-void file_data_update();
-void file_pressure_update();
-void file_close();
-bool file_open();
-void data_deliver();
-void serial_read();
-void send_order(uint8_t); 
-void obey_order(uint8_t);
 
 #endif

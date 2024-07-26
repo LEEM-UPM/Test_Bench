@@ -179,22 +179,22 @@ void transducer_set_high_speed(bool enable)
     adc->adc0->startSingleRead(PIN_TRANSDUCER); // call this to setup everything before the Timer starts, differential is also possible
     adc->adc0->enableInterrupts(transducer_measure);
 
-    if (!enable)
-    {
-      adc->adc0->setAveraging(100); // set number of averages
-      adc->adc0->startTimer(10000); //frequency in Hz
-    }
-    else
+    if (enable)
     {
       adc->adc0->setAveraging(4); // set number of averages
       adc->adc0->startTimer(1000000 / transducer_timer); //frequency in Hz
+    }
+    else
+    {
+      adc->adc0->setAveraging(50); // set number of averages
+      adc->adc0->startTimer(10000); //frequency in Hz
     }
   #endif
 }
 
 void transducer_set_offset()
 {
-  #if TRANSDUCER == 2
+  #if TRANSDUCER == 1
     // Read and get the average
     uint32_t transducer_sum = 0;
 
@@ -348,12 +348,7 @@ void file_data_update()
     // DHT22 data
     RB_data.println(DHT_hum);
 
-    // Write it in the round buffer
-    size_t n = RB_data.bytesUsed();
-    if (n >= 512 && !file_data.isBusy())
-    {
-      RB_data.writeOut(512);
-    }
+    
   #endif
 }
 
@@ -363,34 +358,15 @@ void file_pressure_update()
     if (!SD_ready) {return;}
 
     // Transducer time (in s)
-    float transducer_time = micros() / 10000000. - last_reset_micros;
-    RB_pressure.print(transducer_time, 6);
+    RB_pressure.print(micros() / 10000000. - last_reset_micros, 6);
     RB_pressure.print(", ");
 
     // Transducer measure already converted
     RB_pressure.print(transducer_pressure);
     RB_pressure.print(", ");
 
-    // Raw transducer data    RB_pressure.println(transducer_raw);
-
-    Serial.println();
-    Serial.print("rb.bytesUsed() = ");
-    Serial.println(RB_pressure.bytesUsed());
-    Serial.println();
-
-    Serial.print("condicion 1 = ");
-    Serial.println(RB_pressure.bytesUsed() >= 512);
-
-    Serial.print("condicion 2 = ");
-    Serial.println(!file_pressure.isBusy());
-    // Write it in the round buffer
-    if (RB_pressure.bytesUsed() >= 512 && !file_pressure.isBusy())
-    {
-      RB_pressure.writeOut(512);
-    }
-
-    Serial.println("d");
-    Serial.println(RB_pressure.getWriteError());
+    // Raw transducer data    
+    RB_pressure.println(transducer_raw);
   #endif   
 }
 
@@ -408,7 +384,7 @@ void file_close()
       file_pressure.close();
     #endif
 
-    file_closed = true;
+  file_closed = true;
   #endif  
 }
 
@@ -460,4 +436,15 @@ bool file_open()
   #endif  
 
   return false;
+}
+
+//-------------------------------------------------
+//                   I2C WRITING
+//-------------------------------------------------
+
+void send_BREDA_order(uint8_t order)
+{
+  Wire.beginTransmission(BREDA_ADDRESS);
+  Wire.write(order);
+  Wire.endTransmission();
 }

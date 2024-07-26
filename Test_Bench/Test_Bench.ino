@@ -29,8 +29,6 @@ void setup()
 
   // Cell pin
   pinMode(HX_DOUT, INPUT);
-
-  file_open();
 }
 
 void loop() 
@@ -73,4 +71,15 @@ void loop()
     }  
   #endif  
 
+  #if SD_READER == 1
+    // Write it in the round buffer
+    if (RB_data.bytesUsed() >= 512 && !file_data.isBusy())
+      RB_data.writeOut(512);
+
+    #if TRANSDUCER == 1
+      // Write it in the round buffer
+      if ((RB_pressure.bytesUsed() >= 512) && !file_pressure.isBusy())
+        RB_pressure.writeOut(512);
+    #endif
+  #endif  
 }

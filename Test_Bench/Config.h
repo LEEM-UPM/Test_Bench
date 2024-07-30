@@ -8,7 +8,7 @@
 #define USE_ADC_0
 #define TRANSDUCER                 1
 #define FREQD                      0
-#define RADIO                      0
+#define RADIO                      1
 #define BMP_280                    0
 #define SD_READER                  1
 #define W_CELL                     1
@@ -32,6 +32,8 @@
 #define HX_DOUT                    14
 #define HX_SCK                     15
 #define PIN_TRANSDUCER             A2
+
+#define BREDA_ADDRESS              0x35
 
 //-------------------------------------------------
 //                   LIBRARIES
@@ -155,6 +157,14 @@ bool LED_started = true;
 
 // Alarm variables
 bool alarm_status = false;
+
+enum bredaOrders
+{
+  ensayoStarted = 1,
+  ensayoFinished,
+  relayON,
+  relayOFF
+};
 
 //-------------------------------------------------
 //                  CONFIGURATION    

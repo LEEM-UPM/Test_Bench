@@ -149,7 +149,7 @@ void performance_finished()
 
 void power_relay(bool status)
 {
-  digitalWrite(PIN_RELAY, status);
+  digitalWrite(PIN_RELAY, !status);
   digitalWrite(PIN_ALARM, status);
 } 
 
@@ -179,22 +179,22 @@ void transducer_set_high_speed(bool enable)
     adc->adc0->startSingleRead(PIN_TRANSDUCER); // call this to setup everything before the Timer starts, differential is also possible
     adc->adc0->enableInterrupts(transducer_measure);
 
-    if (!enable)
-    {
-      adc->adc0->setAveraging(100); // set number of averages
-      adc->adc0->startTimer(10000); //frequency in Hz
-    }
-    else
+    if (enable)
     {
       adc->adc0->setAveraging(4); // set number of averages
       adc->adc0->startTimer(1000000 / transducer_timer); //frequency in Hz
+    }
+    else
+    {
+      adc->adc0->setAveraging(50); // set number of averages
+      adc->adc0->startTimer(10000); //frequency in Hz
     }
   #endif
 }
 
 void transducer_set_offset()
 {
-  #if TRANSDUCER == 2
+  #if TRANSDUCER == 1
     // Read and get the average
     uint32_t transducer_sum = 0;
 
@@ -222,6 +222,8 @@ void transducer_measure()
 
     // Write in SD
     if (performance_status) file_pressure_update();
+    //file_pressure_update();
+    
   #endif
 }
 
@@ -345,6 +347,8 @@ void file_data_update()
 
     // DHT22 data
     RB_data.println(DHT_hum);
+
+    
   #endif
 }
 
@@ -354,8 +358,7 @@ void file_pressure_update()
     if (!SD_ready) {return;}
 
     // Transducer time (in s)
-    float transducer_time = micros() / 10000000. - last_reset_micros;
-    RB_pressure.print(transducer_time, 6);
+    RB_pressure.print(micros() / 10000000. - last_reset_micros, 6);
     RB_pressure.print(", ");
 
     // Transducer measure already converted
@@ -365,6 +368,24 @@ void file_pressure_update()
     // Raw transducer data    
     RB_pressure.println(transducer_raw);
   #endif   
+}
+
+void file_close()
+{
+  #if SD_READER == 1
+    // Empty the buffer, truncate the file size and close it
+    RB_data.sync();
+    file_data.truncate();
+    file_data.close();
+
+    #if TRANSDUCER == 1
+      RB_pressure.sync();
+      file_pressure.truncate();
+      file_pressure.close();
+    #endif
+
+  file_closed = true;
+  #endif  
 }
 
 bool file_open()
@@ -417,20 +438,13 @@ bool file_open()
   return false;
 }
 
-void file_close()
+//-------------------------------------------------
+//                   I2C WRITING
+//-------------------------------------------------
+
+void send_BREDA_order(uint8_t order)
 {
-  #if SD_READER == 1
-    // Empty the buffer, truncate the file size and close it
-    RB_data.sync();
-    file_data.truncate();
-    file_data.close();
-
-    #if TRANSDUCER == 1
-      RB_pressure.sync();
-      file_pressure.truncate();
-      file_pressure.close();
-    #endif
-
-    file_closed = true;
-  #endif  
+  Wire.beginTransmission(BREDA_ADDRESS);
+  Wire.write(order);
+  Wire.endTransmission();
 }

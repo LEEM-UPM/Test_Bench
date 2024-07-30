@@ -20,6 +20,7 @@ void setup()
 
   // Relay
   pinMode(PIN_RELAY, OUTPUT);
+  digitalWrite(PIN_RELAY, true);
 
   // Alarm
   pinMode(PIN_ALARM, OUTPUT);

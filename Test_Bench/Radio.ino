@@ -96,8 +96,17 @@ void obey_order(uint8_t order)
       performance_finished();
     break;
 
-    // Ignition
+    // Start ignition
     case 11:  
+      #if RELAY == 1
+        power_relay(true);
+        ignition_started = true;
+        last_ignition = millis();
+      #endif
+    break;
+
+    // Stop ignition (Centralita)
+    case 1:  
       #if RELAY == 1
         power_relay(true);
         ignition_started = true;

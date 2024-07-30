@@ -8,31 +8,33 @@ void serial_read()
 {
   // Detects anything in Serial
   if (RADIO_OUT.available()) 
-  {
     length = RADIO_OUT.readBytesUntil('\n', serialBuffer, serialSize);
-    receiving = true;  
-  }
+  else
+    return;
 
-  // Process serial
-  if (receiving)
+  // Turns off comm LED during LED_timer milis
+  digitalWrite(PIN_LED, false);
+  last_LED = millis();
+  LED_started = false;
+
+  // Orden detection
+  if ((serialBuffer[0] == serialID[0]) && (serialBuffer[1] == serialID[1]))
   {
-    // Turns off comm LED during LED_timer milis
-    digitalWrite(PIN_LED, false);
-    last_LED = millis();
-    LED_started = false;
+    // Checksum 
+    uint16_t checkSum = 0;
+    for (int i = 3; i < length; ++i) 
+      checkSum += serialBuffer[i];
 
-    // Orden detection
-    if ((length == 2) && (serialBuffer[0] == 251))
-    {
-      order = serialBuffer[1];
-      // Resends order to confirm deliver
-      send_order(order);
-      // And acts
-      obey_order(order);
-    } 
-    order = 0;
-    receiving = false;
-  }
+    if (checkSum != serialBuffer[2])
+      return;
+
+    order = serialBuffer[7];
+    // Resends order to confirm deliver
+    send_order(order);
+    // And acts
+    obey_order(order);
+  } 
+  order = 0;
 }
 
 void send_order(uint8_t order) 
@@ -43,6 +45,7 @@ void send_order(uint8_t order)
   RADIO_OUT.write(2);
   RADIO_OUT.write(1);
   RADIO_OUT.write(order);
+  RADIO_OUT.write('\n');
   RADIO_OUT.flush();
 }
 

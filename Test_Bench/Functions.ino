@@ -222,8 +222,6 @@ void transducer_measure()
 
     // Write in SD
     if (performance_status) file_pressure_update();
-    //file_pressure_update();
-    
   #endif
 }
 
@@ -347,13 +345,6 @@ void file_data_update()
 
     // DHT22 data
     RB_data.println(DHT_hum);
-
-    // Write it in the round buffer
-    size_t n = RB_data.bytesUsed();
-    if (n >= 512 && !file_data.isBusy())
-    {
-      RB_data.writeOut(512);
-    }
   #endif
 }
 
@@ -371,45 +362,9 @@ void file_pressure_update()
     RB_pressure.print(transducer_pressure);
     RB_pressure.print(", ");
 
-    // Raw transducer data    RB_pressure.println(transducer_raw);
-
-    Serial.println();
-    Serial.print("rb.bytesUsed() = ");
-    Serial.println(RB_pressure.bytesUsed());
-    Serial.println();
-
-    Serial.print("condicion 1 = ");
-    Serial.println(RB_pressure.bytesUsed() >= 512);
-
-    Serial.print("condicion 2 = ");
-    Serial.println(!file_pressure.isBusy());
-    // Write it in the round buffer
-    if (RB_pressure.bytesUsed() >= 512 && !file_pressure.isBusy())
-    {
-      RB_pressure.writeOut(512);
-    }
-
-    Serial.println("d");
-    Serial.println(RB_pressure.getWriteError());
+    // Raw transducer data    
+    RB_pressure.println(transducer_raw);
   #endif   
-}
-
-void file_close()
-{
-  #if SD_READER == 1
-    // Empty the buffer, truncate the file size and close it
-    RB_data.sync();
-    file_data.truncate();
-    file_data.close();
-
-    #if TRANSDUCER == 1
-      RB_pressure.sync();
-      file_pressure.truncate();
-      file_pressure.close();
-    #endif
-
-    file_closed = true;
-  #endif  
 }
 
 bool file_open()
@@ -460,4 +415,22 @@ bool file_open()
   #endif  
 
   return false;
+}
+
+void file_close()
+{
+  #if SD_READER == 1
+    // Empty the buffer, truncate the file size and close it
+    RB_data.sync();
+    file_data.truncate();
+    file_data.close();
+
+    #if TRANSDUCER == 1
+      RB_pressure.sync();
+      file_pressure.truncate();
+      file_pressure.close();
+    #endif
+
+    file_closed = true;
+  #endif  
 }

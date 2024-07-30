@@ -73,4 +73,16 @@ void loop()
     }  
   #endif  
 
+  // Write it in the SD
+  if (RB_data.bytesUsed() >= 512 && !file_data.isBusy())
+  {
+    RB_data.writeOut(512);
+  }
+
+  #if TRANSDUCER == 1 
+    if (RB_pressure.bytesUsed() >= 512 && !file_pressure.isBusy())
+    {
+      RB_pressure.writeOut(512);
+    }
+  #endif
 }

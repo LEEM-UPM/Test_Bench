@@ -113,7 +113,6 @@ String file_data_name = "_Datos.txt";
 String file_pressure_name = "_Presion.txt";
 
 // Modes
-bool receiving = false;
 bool tared = false;
 bool performance_status = false;
 
@@ -194,32 +193,5 @@ bool alarm_status = false;
 #if TRANSDUCER == 1
   ADC *adc = new ADC();
 #endif
-
-//-------------------------------------------------
-//                    FUNCTIONS   
-//-------------------------------------------------
-
-void sensor_init();
-void iteration();
-void performance();
-void performance_started();
-void performance_finished();
-void power_relay(bool);
-void relay_warning();
-void error_warning();
-void transducer_set_offset();
-void transducer_measure();
-void data_measure();
-void pack_header();
-void pack_change();
-void float_to_byte(float, int);
-void file_data_update();
-void file_pressure_update();
-void file_close();
-bool file_open();
-void data_deliver();
-void serial_read();
-void send_order(uint8_t); 
-void obey_order(uint8_t);
 
 #endif

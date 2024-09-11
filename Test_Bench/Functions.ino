@@ -12,7 +12,6 @@ void sensor_init()
   #if BMP_280 == 1
     if (!bmp->begin(0x76))
     {
-      send_order(12);
       error = true;
     }
   #endif
@@ -31,7 +30,7 @@ void sensor_init()
   #if SD_READER == 1
     if (!SDF.begin(SdioConfig(FIFO_SDIO))) 
     {
-      send_order(14);
+      send_order(errorSD);
       error = true;
       SD_ready = false;
     }
@@ -118,7 +117,7 @@ void performance_started()
   performance_status = true;
   wholePackSize = miniPackSize * packSize;
 
-  if (file_open()) error_warning();
+  file_open();
   delay(4000);
 
   transducer_set_high_speed(true);
@@ -135,7 +134,6 @@ void performance_finished()
   
   performance_status = false;
   ignition_started = false;
-  tared = false;
   wholePackSize = miniPackSize;
   packPos = 0;
 
@@ -179,15 +177,15 @@ void transducer_set_high_speed(bool enable)
     adc->adc0->startSingleRead(PIN_TRANSDUCER); // call this to setup everything before the Timer starts, differential is also possible
     adc->adc0->enableInterrupts(transducer_measure);
 
-    if (enable)
+    if (!enable)
     {
-      adc->adc0->setAveraging(4); // set number of averages
-      adc->adc0->startTimer(1000000 / transducer_timer); //frequency in Hz
+      adc->adc0->setAveraging(100); // set number of averages
+      adc->adc0->startTimer(10000); //frequency in Hz
     }
     else
     {
-      adc->adc0->setAveraging(50); // set number of averages
-      adc->adc0->startTimer(10000); //frequency in Hz
+      adc->adc0->setAveraging(5); // set number of averages
+      adc->adc0->startTimer(1000000 / transducer_timer); //frequency in Hz
     }
   #endif
 }
@@ -196,15 +194,10 @@ void transducer_set_offset()
 {
   #if TRANSDUCER == 1
     // Read and get the average
-    uint32_t transducer_sum = 0;
-
-    for (int i = 0; i < 500; ++i)
-    {
-      transducer_sum += analogRead(PIN_TRANSDUCER);
-      delay(1);
-    }
-    
-    transducer_offset = transducer_sum / (transducer_max_value * 500) * 250;
+    transducer_offset = 0;
+    transducer_counter_offset = 0;
+    last_transducer_offset = millis();
+    transducer_offset_activated = true;
   #endif  
 }
 
@@ -214,7 +207,13 @@ void transducer_measure()
     // Read analog pin and change it to bars
     transducer_raw = adc->adc0->readSingle();
 
-    transducer_pressure = transducer_raw * transducer_const - transducer_offset;
+    if (transducer_offset_activated)
+    {
+      transducer_offset += transducer_raw;
+      ++transducer_counter_offset;
+    }
+
+    transducer_pressure = (transducer_raw - transducer_offset) * transducer_const;
     
     transducer_avg += transducer_pressure;
     ++transducer_counter;
@@ -222,8 +221,6 @@ void transducer_measure()
 
     // Write in SD
     if (performance_status) file_pressure_update();
-    //file_pressure_update();
-    
   #endif
 }
 
@@ -347,8 +344,6 @@ void file_data_update()
 
     // DHT22 data
     RB_data.println(DHT_hum);
-
-    
   #endif
 }
 
@@ -358,7 +353,8 @@ void file_pressure_update()
     if (!SD_ready) {return;}
 
     // Transducer time (in s)
-    RB_pressure.print(micros() / 10000000. - last_reset_micros, 6);
+    float transducer_time = micros() / 10000000. - last_reset_micros;
+    RB_pressure.print(transducer_time, 6);
     RB_pressure.print(", ");
 
     // Transducer measure already converted
@@ -370,25 +366,7 @@ void file_pressure_update()
   #endif   
 }
 
-void file_close()
-{
-  #if SD_READER == 1
-    // Empty the buffer, truncate the file size and close it
-    RB_data.sync();
-    file_data.truncate();
-    file_data.close();
-
-    #if TRANSDUCER == 1
-      RB_pressure.sync();
-      file_pressure.truncate();
-      file_pressure.close();
-    #endif
-
-  file_closed = true;
-  #endif  
-}
-
-bool file_open()
+void file_open()
 {
   #if SD_READER == 1
     if (!SD_ready) {return false;}
@@ -400,20 +378,20 @@ bool file_open()
 
     if (!file_data.open(newName.c_str(), O_RDWR | O_CREAT))
     {
-      send_order(15);
+      send_order(errorSDFile);
       error_warning();
       SD_ready = false;
-      return true;
+      return;
     }
 
     #if TRANSDUCER == 1
       newName = i + file_pressure_name;
       if (!file_pressure.open(newName.c_str(), O_RDWR | O_CREAT))
       {
-        send_order(15);
+        send_order(errorSDFile);
         error_warning();
         SD_ready = false;
-        return true;
+        return;
       }
     #endif
 
@@ -434,12 +412,28 @@ bool file_open()
       RB_pressure.begin(&file_pressure);
     #endif
   #endif  
+}
 
-  return false;
+void file_close()
+{
+  #if SD_READER == 1
+    // Empty the buffer, truncate the file size and close it
+    RB_data.sync();
+    file_data.truncate();
+    file_data.close();
+
+    #if TRANSDUCER == 1
+      RB_pressure.sync();
+      file_pressure.truncate();
+      file_pressure.close();
+    #endif
+
+    file_closed = true;
+  #endif  
 }
 
 //-------------------------------------------------
-//                   I2C WRITING
+//                I2C COMMUNICATION
 //-------------------------------------------------
 
 void send_BREDA_order(uint8_t order)

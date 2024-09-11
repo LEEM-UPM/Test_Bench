@@ -25,6 +25,9 @@
 #define RADIO_OUT                   Serial
 #endif
 
+#define BREDA_ADDRESS              0x35
+#define POWER_ADDRESS              0x39
+
 #define PIN_ALARM                  2
 #define PIN_RELAY                  3
 #define PIN_DHT                    4
@@ -32,8 +35,6 @@
 #define HX_DOUT                    14
 #define HX_SCK                     15
 #define PIN_TRANSDUCER             A2
-
-#define BREDA_ADDRESS              0x35
 
 //-------------------------------------------------
 //                   LIBRARIES
@@ -81,6 +82,7 @@ uint32_t last_DHT = 0;
 uint32_t last_LED = 0;
 uint32_t last_ignition = 0;
 uint32_t last_alarm = 0;
+uint32_t last_transducer_offset = 0;
 
 // Timers
 const uint32_t transducer_timer = 10;
@@ -115,7 +117,6 @@ String file_data_name = "_Datos.txt";
 String file_pressure_name = "_Presion.txt";
 
 // Modes
-bool tared = false;
 bool performance_status = false;
 
 // Cell Variables
@@ -128,17 +129,20 @@ float cell_thrust = 0;
 const uint16_t transducer_max_pressure = 250;
 const uint16_t transducer_min_value = 496;
 const uint16_t transducer_max_value = 2482;
-const float transducer_const = transducer_max_pressure / (transducer_max_value - transducer_min_value);
+const float transducer_const = float(transducer_max_pressure) / (transducer_max_value - transducer_min_value);
 
 volatile uint32_t transducer_counter = 0;
+volatile uint32_t transducer_counter_offset = 0;
 volatile uint32_t transducer_freq = 0;
 
-volatile uint16_t transducer_raw = 0;
+volatile int16_t transducer_raw = 0;
 volatile float transducer_avg = 0;
 volatile float transducer_pressure = 0;
 
+volatile int32_t transducer_offset = 0;
+
 bool transducer_enabled = true;
-float transducer_offset = 0;
+bool transducer_offset_activated = false;
 
 // BMP280 variables
 float BMP_temp = 0;
@@ -158,12 +162,21 @@ bool LED_started = true;
 // Alarm variables
 bool alarm_status = false;
 
-enum bredaOrders
+enum radio_orders 
 {
-  ensayoStarted = 1,
-  ensayoFinished,
-  relayON,
-  relayOFF
+  arduinoConnected = 1,
+  enableTransducer,
+  disableTransducer,
+  reboot,
+  rebootComplete,
+  tare,
+  tareComplete,
+  startPerforming,
+  stopPerforming,
+  startIgnition = 11,
+  stopIgnition,
+  errorSD = 20,
+  errorSDFile
 };
 
 //-------------------------------------------------

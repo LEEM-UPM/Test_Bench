@@ -11,6 +11,7 @@ void serial_read()
     length = RADIO_OUT.readBytesUntil('\n', serialBuffer, serialSize);
   else
     return;
+  //for (int i = 0; i < serialSize; ++i) Serial.println(serialBuffer[i]);
 
   // Turns off comm LED during LED_timer milis
   digitalWrite(PIN_LED, false);
@@ -28,7 +29,7 @@ void serial_read()
     if (checkSum != serialBuffer[2])
       return;
 
-    order = serialBuffer[7];
+    order = serialBuffer[6];
     // Resends order to confirm deliver
     send_order(order);
     // And acts
@@ -54,63 +55,62 @@ void obey_order(uint8_t order)
   switch (order) 
   {
     // Conexion established
-    case 1:  
+    case arduinoConnected:  
       transducer_enabled = true;
     break;
 
     // Transducer activated
-    case 2:  
+    case enableTransducer:  
       transducer_enabled = true;
     break;
 
     // Transducer deactivated
-    case 3:  
+    case disableTransducer: 
       transducer_enabled = false;
     break;
 
     // Reboot
-    case 4:  
+    case reboot:  
       performance_finished();  
-      send_order(5);
+      send_order(rebootComplete);
     break;
 
     // Tare
-    case 6:  
+    case tare:  
       #if W_CELL == 1
         cell.tare(255);
       #endif  
       #if TRANSDUCER == 1
         transducer_set_offset();
       #endif       
-      tared = true;
-      send_order(7);
+      send_order(tareComplete);
     break;
     
     // Start performing
-    case 8:  
+    case startPerforming:  
       performance_started();
     break;
 
     // Stop performing
-    case 9:  
+    case stopPerforming:  
       performance_finished();
     break;
 
     // Start ignition
-    case 11:  
+    case startIgnition:  
       #if RELAY == 1
-        power_relay(true);
         ignition_started = true;
+        //ignition_started = !ignition_started;
+        power_relay(ignition_started);
         last_ignition = millis();
       #endif
     break;
 
     // Stop ignition (Centralita)
-    case 1:  
+    case stopIgnition:  
       #if RELAY == 1
-        power_relay(true);
-        ignition_started = true;
-        last_ignition = millis();
+        power_relay(false);
+        ignition_started = false;
       #endif
     break;
   }

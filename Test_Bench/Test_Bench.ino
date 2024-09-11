@@ -8,6 +8,8 @@
 
 void setup() 
 {
+  Serial.begin(460800);
+
   // LED Control
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, true);
@@ -20,6 +22,7 @@ void setup()
 
   // Relay
   pinMode(PIN_RELAY, OUTPUT);
+  digitalWrite(PIN_RELAY, true);
 
   // Alarm
   pinMode(PIN_ALARM, OUTPUT);
@@ -55,6 +58,15 @@ void loop()
       interrupts();
     }
   #endif  
+
+  // Transducer offset
+  #if TRANSDUCER == 1 
+    if ((transducer_offset_activated) && ((millis() - last_transducer_offset) > 1000))
+    {
+      transducer_offset /= transducer_counter_offset;
+      transducer_offset_activated = false;
+    }
+  #endif 
   
   // Turns on the led after one second (Normally because an orden has been sent)
   if (!LED_started && (millis() - last_LED > LED_timer)) 
@@ -64,7 +76,7 @@ void loop()
   }
   
   // Turns off relay after 5 secs
-  #if RELAY == 1 
+  #if RELAY == 1  
     if ((ignition_started) && (millis() - last_ignition > ignition_timer))
     {
       ignition_started = false;

@@ -11,30 +11,33 @@ void serial_read()
     length = RADIO_OUT.readBytesUntil('\n', serialBuffer, serialSize);
   else
     return;
-  //for (int i = 0; i < serialSize; ++i) Serial.println(serialBuffer[i]);
+
+  /*
+  Serial.println();
+  for (int i = 0; i < serialSize; ++i) 
+  {
+    Serial.print(serialBuffer[i]);
+    Serial.print(" ");
+  }
+  Serial.println();
+  */
+
+  // Orden detection
+  order = order_checking(serialBuffer, serialSize);
+  if (order == -1) return;
 
   // Turns off comm LED during LED_timer milis
   digitalWrite(PIN_LED, false);
   last_LED = millis();
   LED_started = false;
 
-  // Orden detection
-  if ((serialBuffer[0] == serialID[0]) && (serialBuffer[1] == serialID[1]))
-  {
-    // Checksum 
-    uint16_t checkSum = 0;
-    for (int i = 3; i < length; ++i) 
-      checkSum += serialBuffer[i];
+  // Resends order to confirm deliver
+  send_order(order);
+  // Acts
+  obey_order(order);
+  // Sends it to BREDA
+  send_BREDA_order(order); 
 
-    if (checkSum != serialBuffer[2])
-      return;
-
-    order = serialBuffer[6];
-    // Resends order to confirm deliver
-    send_order(order);
-    // And acts
-    obey_order(order);
-  } 
   order = 0;
 }
 

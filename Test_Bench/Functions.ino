@@ -108,6 +108,9 @@ void performance()
     data_deliver();  
   }  
 
+  // Request data from BREDA
+  requestBreda();
+
   // Writes in SD
   file_data_update();
 }
@@ -118,7 +121,7 @@ void performance_started()
   wholePackSize = miniPackSize * packSize;
 
   file_open();
-  delay(4000);
+  delay(1000);
 
   transducer_set_high_speed(true);
 }
@@ -138,7 +141,7 @@ void performance_finished()
   packPos = 0;
 
   last_reset_millis = millis();
-  last_reset_millis = last_reset_millis / 1000.;
+  last_reset_micros = last_reset_millis / 1000.;
 }
 
 //-------------------------------------------------
@@ -294,12 +297,10 @@ void pack_change()
   float_to_byte(DHT_hum, 25);
 
   // CheckSum
-  int check = 0;
-  byteConverter toInt;
+  uint8_t check = 0;
 
   for (int i = 4; i < miniPackSize; ++i) check += miniPack[i];
-  toInt.intP = check;
-  for (int i = 0; i < 2; ++i) miniPack[2 + i] = toInt.byteP[i];
+  miniPack[3] = check;
 }
 
 void float_to_byte(float var, int pos)
@@ -381,7 +382,7 @@ void file_open()
       send_order(errorSDFile);
       error_warning();
       SD_ready = false;
-      return;
+      return true;
     }
 
     #if TRANSDUCER == 1
@@ -391,7 +392,7 @@ void file_open()
         send_order(errorSDFile);
         error_warning();
         SD_ready = false;
-        return;
+        return true;
       }
     #endif
 
@@ -412,6 +413,8 @@ void file_open()
       RB_pressure.begin(&file_pressure);
     #endif
   #endif  
+
+  return false;
 }
 
 void file_close()
@@ -433,12 +436,54 @@ void file_close()
 }
 
 //-------------------------------------------------
+//                 COMMUNICATION
+//-------------------------------------------------
+
+uint8_t order_checking(uint8_t buf[], uint8_t length)
+{
+  // Size detection
+  if (length < 7) 
+    return -1;
+
+  // ID detection
+  if ((buf[0] != serialID[0]) || (buf[1] != serialID[1]) || (buf[2] != HERMES_ADDRESS))
+    return -1;
+
+  // Checksum 
+  uint8_t checkSum = 0;
+  for (int i = 4; i < length; ++i) 
+    checkSum += buf[i];
+
+  if (checkSum != buf[3])
+    return -1;
+
+  return buf[6];    
+}
+
+//-------------------------------------------------
 //                I2C COMMUNICATION
 //-------------------------------------------------
 
 void send_BREDA_order(uint8_t order)
 {
   Wire.beginTransmission(BREDA_ADDRESS);
+  Wire.write(serialID, 2);
+  Wire.write(BREDA_ID);
+  Wire.write(order + 3);
+  Wire.write(2);
+  Wire.write(1);
   Wire.write(order);
   Wire.endTransmission();
+}
+
+void requestBreda()
+{
+  uint8_t buf[10] = {0}, count = 0;
+  Wire.requestFrom(BREDA_ADDRESS, 7);
+
+  while (Wire.available())
+    buf[count++] = Wire.read();
+
+  uint8_t order = order_checking(buf, count);
+  send_order(order + 100); // Sends BREDA order confirmation by telemetry (to differenciate boards we add 100)
 }

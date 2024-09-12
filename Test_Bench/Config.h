@@ -8,7 +8,7 @@
 #define USE_ADC_0
 #define TRANSDUCER                 1
 #define FREQD                      0
-#define RADIO                      1
+#define RADIO                      0
 #define BMP_280                    0
 #define SD_READER                  1
 #define W_CELL                     1
@@ -26,7 +26,7 @@
 #endif
 
 #define BREDA_ADDRESS              0x35
-#define POWER_ADDRESS              0x39
+#define HERMES_ADDRESS             0x39
 
 #define PIN_ALARM                  2
 #define PIN_RELAY                  3
@@ -69,6 +69,8 @@
 
 // ID Bytes
 const uint8_t serialID[] = {0xFE, 0xFB};
+const uint8_t BREDA_ID = 0xFC;
+const uint8_t HERMES_ID = 0xFA;
 
 // Time
 float sec = 0;
@@ -176,7 +178,7 @@ enum radio_orders
   startIgnition = 11,
   stopIgnition,
   errorSD = 20,
-  errorSDFile
+  errorSDFile,
 };
 
 //-------------------------------------------------

@@ -6,14 +6,14 @@
 //-------------------------------------------------
 
 #define USE_ADC_0
+#define HIDROSTATIC                1
 #define TRANSDUCER                 1
 #define FREQD                      0
-#define RADIO                      0
+#define RADIO                      1
 #define BMP_280                    0
 #define SD_READER                  1
 #define W_CELL                     1
 #define DHT_22                     1
-#define RELAY                      1
 
 //-------------------------------------------------
 //                      PINS

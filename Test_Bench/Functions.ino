@@ -270,6 +270,7 @@ void pack_header()
   // Add header of every minipack, 2 ID bytes, and 24 length bytes
   miniPack[0] = serialID[0];
   miniPack[1] = serialID[1];
+  miniPack[2] = serialID[1];
   miniPack[4] = 0X18;
 }
 
@@ -446,7 +447,7 @@ uint8_t order_checking(uint8_t buf[], uint8_t length)
     return -1;
 
   // ID detection
-  if ((buf[0] != serialID[0]) || (buf[1] != serialID[1]) || (buf[2] != HERMES_ADDRESS))
+  if ((buf[0] != serialID[0]) || (buf[1] != serialID[1]) || (buf[2] != HERMES_ID))
     return -1;
 
   // Checksum 
@@ -479,11 +480,23 @@ void send_BREDA_order(uint8_t order)
 void requestBreda()
 {
   uint8_t buf[10] = {0}, count = 0;
-  Wire.requestFrom(BREDA_ADDRESS, 7);
+  Wire.requestFrom(BREDA_ADDRESS, 8);
 
   while (Wire.available())
     buf[count++] = Wire.read();
 
-  uint8_t order = order_checking(buf, count);
-  send_order(order + 100); // Sends BREDA order confirmation by telemetry (to differenciate boards we add 100)
+  uint8_t last_order = order_checking(buf, count);
+
+  if (last_order == 255) 
+    return;
+
+  if (order == last_order) 
+  {
+    order = 0;
+    send_order(last_order + 100); // Sends BREDA order confirmation by telemetry (to differenciate boards we add 100)
+  }
+  else if (order != 0)
+  {
+    send_BREDA_order(order);
+  }
 }

@@ -76,11 +76,11 @@ void loop()
   }
   
   // Turns off relay after 5 secs
-  #if RELAY == 1  
+  #if HIDROSTATIC != 1  
     if ((ignition_started) && (millis() - last_ignition > ignition_timer))
     {
       ignition_started = false;
-      power_relay(false);
+      power_relay(ignition_started);
       digitalWrite(PIN_LED, true);
     }  
   #endif  

@@ -6,7 +6,6 @@
 //-------------------------------------------------
 
 #define USE_ADC_0
-#define HIDROSTATIC                1
 #define TRANSDUCER                 1
 #define FREQD                      0
 #define RADIO                      1
@@ -120,6 +119,7 @@ String file_pressure_name = "_Presion.txt";
 
 // Modes
 bool performance_status = false;
+bool hydrostatic_enabled = false;
 
 // Cell Variables
 const float cell_f = (5*2.5)/(1024*175);
@@ -169,14 +169,15 @@ enum radio_orders
   arduinoConnected = 1,
   enableTransducer,
   disableTransducer,
+  enableHydroStatic,
+  disableHydroStatic,
   reboot,
-  rebootComplete,
-  tare,
-  tareComplete,
+  rarete,
   startPerforming,
   stopPerforming,
   startIgnition = 11,
   stopIgnition,
+  tare,
   errorSD = 20,
   errorSDFile,
 };

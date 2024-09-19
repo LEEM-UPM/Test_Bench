@@ -22,16 +22,57 @@ void setup()
 
   // Relay
   pinMode(PIN_RELAY, OUTPUT);
-  digitalWrite(PIN_RELAY, true);
+  power_relay(false);
 
   // Alarm
   pinMode(PIN_ALARM, OUTPUT);
 
-  // Sensor start
-  sensor_init();
+  // Sensors 
+  bool error = false;
 
-  // Cell pin
-  pinMode(HX_DOUT, INPUT);
+  // BMP280 
+  #if BMP_280 == 1
+    if (!bmp->begin(0x76))
+    {
+      error = true;
+    }
+  #endif
+
+  // DHT 
+  #if DHT_22 == 1
+    dht.begin();
+  #endif
+
+  // Cell 
+  #if W_CELL == 1
+    cell.begin(HX_DOUT, HX_SCK);
+    pinMode(HX_DOUT, INPUT);
+  #endif
+
+  // SD 
+  #if SD_READER == 1
+    if (!SDF.begin(SdioConfig(FIFO_SDIO))) 
+    {
+      send_order(errorSD);
+      error = true;
+      SD_ready = false;
+    }
+  #endif
+
+  // Transducer 
+  #if TRANSDUCER == 1
+    adc->adc0->setAveraging(8);
+    adc->adc0->setResolution(12); // set bits of resolution
+    adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED); // change the conversion speed
+    adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED); // change the sampling speed
+
+    transducer_set_high_speed(false);
+  #endif
+
+  if (error) error_warning();
+
+  pack_header();  
+  wholePackSize = miniPackSize;
 
   file_open();
 }
@@ -75,15 +116,11 @@ void loop()
     digitalWrite(PIN_LED, true);
   }
   
-  // Turns off relay after 5 secs
-  #if HIDROSTATIC != 1  
-    if ((ignition_started) && (millis() - last_ignition > ignition_timer))
-    {
-      ignition_started = false;
-      power_relay(ignition_started);
-      digitalWrite(PIN_LED, true);
-    }  
-  #endif  
+  // Turns off relay after 5 secs (In case it is on and an hydrostatic test is not going on)
+  if ((hydrostatic_enabled) && (ignition_started) && (millis() - last_ignition > ignition_timer))
+  {
+    send_order(stopIgnition);
+  }  
 
   // Write it in the SD
   if (RB_data.bytesUsed() >= 512 && !file_data.isBusy())

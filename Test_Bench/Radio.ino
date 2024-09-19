@@ -22,17 +22,16 @@ void serial_read()
   last_LED = millis();
   LED_started = false;
 
-  // Resends order to confirm deliver
-  send_order(order);
+  // In case is sending turn off order from interface
+  if ((order == startIgnition) && ignition_started) 
+    order = stopIgnition;
+
   // Acts
   obey_order(order);
-  // Sends it to BREDA
-  send_BREDA_order(order); 
 }
 
 void send_order(uint8_t order) 
 { 
-  Serial.print("a");
   RADIO_OUT.write(serialID, 2);
   RADIO_OUT.write(HERMES_ID);
   RADIO_OUT.write(order + 3);
@@ -45,11 +44,18 @@ void send_order(uint8_t order)
 
 void obey_order(uint8_t order)
 {
+  // Resends order to confirm deliver
+  send_order(order);
+
+  // Sends it to BREDA
+  send_BREDA_order(order); 
+
   switch (order) 
   {
   // Conexion established
   case arduinoConnected:  
     transducer_enabled = true;
+    hydrostatic_enabled = false;
     break;
 
   // Transducer activated
@@ -62,10 +68,19 @@ void obey_order(uint8_t order)
     transducer_enabled = false;
     break;
 
+  // Hydrostatic activated
+  case enableHydroStatic:  
+    hydrostatic_enabled = true;
+    break;
+
+    // Hydrostatic deactivated
+  case disableHydroStatic: 
+    hydrostatic_enabled = false;
+    break;  
+
   // Reboot
   case reboot:  
     performance_finished();  
-    send_order(rebootComplete);
     break;
 
   // Tare
@@ -76,7 +91,6 @@ void obey_order(uint8_t order)
     #if TRANSDUCER == 1
       transducer_set_offset();
     #endif       
-    send_order(tareComplete);
     break;
     
   // Start performing
@@ -91,15 +105,12 @@ void obey_order(uint8_t order)
 
   // Start ignition
   case startIgnition:  
-    ignition_started = !ignition_started;
-    power_relay(ignition_started);
-    last_ignition = millis();
+    ignition_toggled(true);
     break;
 
-  // Stop ignition (Centralita)
+  // Stop ignition 
   case stopIgnition:  
-    power_relay(false);
-    ignition_started = false;     
+    ignition_toggled(false);     
     break;
   }
 }

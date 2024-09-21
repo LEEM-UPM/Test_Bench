@@ -117,9 +117,10 @@ void loop()
   }
   
   // Turns off relay after 5 secs (In case it is on and an hydrostatic test is not going on)
-  if ((hydrostatic_enabled) && (ignition_started) && (millis() - last_ignition > ignition_timer))
+  if ((!hydrostatic_enabled) && (ignition_started) && (millis() - last_ignition > ignition_timer))
   {
-    send_order(stopIgnition);
+    last_ignition = millis();
+    obey_order(stopIgnition);
   }  
 
   // Write it in the SD

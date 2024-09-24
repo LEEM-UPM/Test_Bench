@@ -34,12 +34,9 @@ void pack_change()
   transducer_avg = 0;
   transducer_counter = 0;
 
-  // BMP280 data
-  float_to_byte(BMP_temp, 17);
-  float_to_byte(BMP_pressure, 21);
-
   // DHT22 data
-  float_to_byte(DHT_hum, 25);
+  float_to_byte(DHT_temp, 17);
+  float_to_byte(DHT_hum, 21);
 
   // CheckSum
   uint8_t check = 0;
@@ -82,13 +79,9 @@ void file_data_update()
     transducer_avg = 0;
     transducer_counter = 0;
 
-    // BMP280 data
-    RB_data.print(BMP_temp);
-    RB_data.print(", ");
-    RB_data.print(BMP_pressure);
-    RB_data.print(", ");
-
     // DHT22 data
+    RB_data.print(DHT_temp);
+    RB_data.print(", ");
     RB_data.println(DHT_hum);
   #endif
 }
@@ -112,10 +105,11 @@ void file_pressure_update()
   #endif   
 }
 
-void file_open()
+bool file_open()
 {
   #if SD_READER == 1
-    if (!SD_ready) {return false;}
+    if (!SD_ready) 
+      return false;
 
     int i = 0; 
     String newName = i + file_data_name;
@@ -127,7 +121,7 @@ void file_open()
       send_order(errorSDFile);
       error_warning();
       SD_ready = false;
-      return true;
+      return false;
     }
 
     #if TRANSDUCER == 1
@@ -137,14 +131,14 @@ void file_open()
         send_order(errorSDFile);
         error_warning();
         SD_ready = false;
-        return true;
+        return false;
       }
     #endif
 
     file_closed = false;
 
     // File header
-    file_data.println("Time, Thrust, Chamber_Pressure, BMP_Temperatura, BMP_Pressure, DHT_Humidity");
+    file_data.println("Time, Thrust, Chamber_Pressure, DHT_Temperature, DHT_Humidity");
 
     // Allocate space to avoid huge delays
     file_data.preAllocate(file_size); 
@@ -159,7 +153,7 @@ void file_open()
     #endif
   #endif  
 
-  return false;
+  return true;
 }
 
 void file_close()

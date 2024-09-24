@@ -9,7 +9,6 @@
 #define TRANSDUCER                 1
 #define FREQD                      0
 #define RADIO                      1
-#define BMP_280                    0
 #define SD_READER                  1
 #define W_CELL                     1
 #define DHT_22                     1
@@ -101,7 +100,7 @@ uint16_t length = 0;
 
 // Pack deliver
 const uint16_t packSize = 4;
-const uint16_t miniPackSize = 29;
+const uint16_t miniPackSize = 25;
 
 uint16_t wholePackSize = miniPackSize * packSize;
 uint16_t packPos = 0;
@@ -145,11 +144,6 @@ volatile int32_t transducer_offset = 0;
 
 bool transducer_enabled = true;
 bool transducer_offset_activated = false;
-
-// BMP280 variables
-float BMP_temp = 0;
-float BMP_pressure = 0; 
-float BMP_ref_pressure = 0;
 
 // DHT22 variables
 float DHT_hum = 0;

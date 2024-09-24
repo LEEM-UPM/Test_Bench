@@ -30,14 +30,6 @@ void setup()
   // Sensors 
   bool error = false;
 
-  // BMP280 
-  #if BMP_280 == 1
-    if (!bmp->begin(0x76))
-    {
-      error = true;
-    }
-  #endif
-
   // DHT 
   #if DHT_22 == 1
     dht.begin();
@@ -69,21 +61,22 @@ void setup()
     transducer_set_high_speed(false);
   #endif
 
-  if (error) error_warning();
+  if (error) 
+    error_warning();
 
   pack_header();  
   wholePackSize = miniPackSize;
-
-  file_open();
 }
 
 void loop() 
 {
   // Reads an instruction if it arrived
-  serial_read();
+  if (RADIO_OUT.available())
+    serial_read();
 
   // Iteration
-  iteration();
+  if (digitalRead(HX_DOUT)) 
+    iteration();
 
   // Prints the transducer freq
   #if TRANSDUCER == 1 && FREQD == 1

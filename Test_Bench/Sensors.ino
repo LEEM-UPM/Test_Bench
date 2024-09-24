@@ -4,15 +4,6 @@
 
 void data_measure()
 {
-  // Time 
-  sec = (millis() - last_reset_millis) / 1000.;
-
-  // BMP280
-  #if BMP_280 == 1
-    BMP_temp = bmp->readTemperature();
-    BMP_pressure = bmp->readPressure();
-  #endif
-
   // DHT
   #if DHT_22 == 1
     if (millis() - last_DHT > DHT_timer) 

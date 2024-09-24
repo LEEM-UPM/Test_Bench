@@ -4,15 +4,10 @@
 
 void iteration()
 {
-  if (digitalRead(HX_DOUT)) {return;}
-
-  time_rn = millis();
-
   if (performance_status)
   {
     // Performance
     performance(); 
-    last_time = time_rn;     
 
     // To know the frequency
     #if FREQD == 1 
@@ -28,15 +23,17 @@ void iteration()
     #endif    
   }   
   // If not performing, sends data one time per second 
-  else if (time_rn - last_time >= 1000) 
+  else if (millis() - last_time >= 1000) 
   {
-    last_time = time_rn;
+    last_time = millis();
     performance();
   } 
 }
 
 void performance() 
 {
+  sec = (millis() - last_reset_millis) / 1000.;
+
   // Measures sensors
   data_measure();
   
@@ -44,7 +41,8 @@ void performance()
   pack_change();
 
   // Sends every 4 minipacks
-  for (int i = 0; i < miniPackSize; ++i) wholePack[i + packPos] = miniPack[i];
+  for (int i = 0; i < miniPackSize; ++i) 
+    wholePack[i + packPos] = miniPack[i];
   packPos += miniPackSize;
 
   if (packPos == wholePackSize)
@@ -66,7 +64,6 @@ void performance_started()
   wholePackSize = miniPackSize * packSize;
 
   file_open();
-  delay(1000);
 
   transducer_set_high_speed(true);
 }
@@ -74,7 +71,8 @@ void performance_started()
 void performance_finished()
 {
   #if SD_READER == 1
-    if (!file_closed) {file_close();}
+    if (!file_closed) 
+      file_close();
   #endif
 
   power_relay(false);
@@ -101,9 +99,9 @@ void power_relay(bool status)
 
 void ignition_toggled(bool status)
 {
+  last_ignition = millis();
   ignition_started = status;
   power_relay(status);
-  last_ignition = millis();
 }
 
 //-------------------------------------------------

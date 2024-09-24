@@ -5,12 +5,8 @@ void data_deliver()
 }
 
 void serial_read()
-{
-  // Detects anything in Serial
-  if (RADIO_OUT.available()) 
-    length = RADIO_OUT.readBytesUntil('\n', serialBuffer, serialSize);
-  else
-    return;
+{ 
+  length = RADIO_OUT.readBytesUntil('\n', serialBuffer, serialSize);
 
   // Orden detection
   order = order_checking(serialBuffer, length);

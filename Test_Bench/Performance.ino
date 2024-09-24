@@ -23,7 +23,7 @@ void iteration()
     #endif    
   }   
   // If not performing, sends data one time per second 
-  else if (millis() - last_time >= 1000) 
+  else if ((millis() - last_time) >= 1000) 
   {
     last_time = millis();
     performance();
@@ -60,12 +60,11 @@ void performance()
 
 void performance_started()
 {
-  performance_status = true;
   wholePackSize = miniPackSize * packSize;
-
   file_open();
 
   transducer_set_high_speed(true);
+  performance_status = true;
 }
 
 void performance_finished()

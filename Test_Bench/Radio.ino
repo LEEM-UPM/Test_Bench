@@ -11,7 +11,8 @@ void serial_read()
   // Orden detection
   order = order_checking(serialBuffer, length);
   Serial.println(order);
-  if (order == 255) return;
+  if (order == 255) 
+    return;
 
   // Turns off comm LED during LED_timer milis
   digitalWrite(PIN_LED, false);
@@ -73,11 +74,6 @@ void obey_order(uint8_t order)
   case disableHydroStatic: 
     hydrostatic_enabled = false;
     break;  
-
-  // Reboot
-  case reboot:  
-    performance_finished();  
-    break;
 
   // Tare
   case tare:  

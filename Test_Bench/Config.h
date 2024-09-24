@@ -44,9 +44,6 @@
 // DHT22
 #include <DHT.h>
 
-// BMP280
-#include <Adafruit_BMP280.h>
-
 // Weight cell
 #include <HX711.h>
 
@@ -165,9 +162,7 @@ enum radio_orders
   disableTransducer,
   enableHydroStatic,
   disableHydroStatic,
-  reboot,
-  rarete,
-  startPerforming,
+  startPerforming = 8,
   stopPerforming,
   startIgnition = 11,
   stopIgnition,
@@ -179,11 +174,6 @@ enum radio_orders
 //-------------------------------------------------
 //                  CONFIGURATION    
 //-------------------------------------------------
-
-// BMP280
-#if BMP_280 == 1
-  Adafruit_BMP280* bmp = new Adafruit_BMP280;
-#endif
 
 // DHT22
 #if DHT_22 == 1

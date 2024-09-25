@@ -11,11 +11,11 @@ union byteConverter
 
 void pack_header()
 {
-  // Add header of every minipack, 2 ID bytes, and 24 length bytes
+  // Add header of every minipack, 2 ID bytes, and 20 length bytes
   miniPack[0] = serialID[0];
   miniPack[1] = serialID[1];
   miniPack[2] = serialID[1];
-  miniPack[4] = 0X18;
+  miniPack[4] = 20;
 }
 
 void pack_change()

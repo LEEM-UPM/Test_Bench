@@ -127,7 +127,7 @@ float cell_thrust = 0;
 const uint16_t transducer_max_pressure = 250;
 const uint16_t transducer_min_value = 496;
 const uint16_t transducer_max_value = 2482;
-const float transducer_const = float(transducer_max_pressure) / (transducer_max_value - transducer_min_value);
+const float transducer_const = 0.1667; //float(transducer_max_pressure) / (transducer_max_value - transducer_min_value);
 
 volatile uint32_t transducer_counter = 0;
 volatile uint32_t transducer_counter_offset = 0;

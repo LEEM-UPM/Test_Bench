@@ -62,6 +62,13 @@
 //                   VARIABLES
 //-------------------------------------------------
 
+union byteConverter
+{
+	float floatP;
+  uint16_t intP;
+	uint8_t byteP[4];
+};
+
 // ID Bytes
 const uint8_t serialID[] = {0xFE, 0xFB};
 const uint8_t BREDA_ID = 0xFC;
@@ -145,6 +152,12 @@ bool transducer_offset_activated = false;
 // DHT22 variables
 float DHT_hum = 0;
 float DHT_temp = 0;
+
+//Breda buffer
+uint8_t I2C_buff[100] = [0];
+byteConverter temp_TP[14];
+byteConverter temp_ADC[4];
+
 
 // Ignition variables
 bool ignition_started = false;

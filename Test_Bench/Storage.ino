@@ -2,13 +2,6 @@
 //                DATA MANAGEMENT
 //-------------------------------------------------
 
-union byteConverter
-{
-	float floatP;
-  uint16_t intP;
-	uint8_t byteP[4];
-};
-
 void pack_header()
 {
   // Add header of every minipack, 2 ID bytes, and 20 length bytes
@@ -37,6 +30,14 @@ void pack_change()
   // DHT22 data
   float_to_byte(DHT_temp, 17);
   float_to_byte(DHT_hum, 21);
+
+  //Temperature data
+  for (int i = 0; i < 14; i++) {
+    float_to_byte(TP_temp[i], 21+4i);
+  }
+  for (int i = 0; i < 4; i++) {
+    float_to_byte(ADC_temp[i], 77+4i);
+  } 
 
   // CheckSum
   uint8_t check = 0;
@@ -83,6 +84,18 @@ void file_data_update()
     RB_data.print(DHT_temp);
     RB_data.print(", ");
     RB_data.println(DHT_hum);
+    RB_data.print(", ");
+
+    // Temperature data
+    for (int i = 0; i < 14; i++) {
+    RB_data.print(temp_TP[i].floatP);
+    RB_data.print(", ");
+    }
+    for (int i = 0; i < 4; i++) {
+    RB_data.print(temp_ADC[i].floatP);
+    RB_data.print(", ");
+    }
+
   #endif
 }
 
@@ -138,7 +151,7 @@ bool file_open()
     file_closed = false;
 
     // File header
-    file_data.println("Time, Thrust, Chamber_Pressure, DHT_Temperature, DHT_Humidity");
+    file_data.println("Time, Thrust, Chamber_Pressure, DHT_Temperature, DHT_Humidity, TP_temperature1, TP_temperature2, TP_temperature3, TP_temperature4, TP_temperature5,TP_temperature6, TP_temperature7, TP_temperature8, TP_temperature9, TP_temperature10, TP_temperature11, TP_temperature12, TP_temperature13, TP_temperature14, ADC_temperature1, ADC_temperature2, ADC_temperature3, ADC_temperature4");
 
     // Allocate space to avoid huge delays
     file_data.preAllocate(file_size); 

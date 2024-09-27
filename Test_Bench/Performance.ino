@@ -36,7 +36,10 @@ void performance()
 
   // Measures sensors
   data_measure();
-  
+
+   // Request data from BREDA
+  requestBreda();
+
   // Sets the pack
   pack_change();
 
@@ -50,9 +53,6 @@ void performance()
     packPos = 0;
     data_deliver();  
   }  
-
-  // Request data from BREDA
-  requestBreda();
 
   // Writes in SD
   file_data_update();

@@ -41,11 +41,11 @@ void send_BREDA_order(uint8_t order)
 
 void requestBreda()
 {
-  uint8_t buf[10] = {0}, count = 0;
+  int count = 0;
   Wire.requestFrom(BREDA_ADDRESS, 7);
 
   while (Wire.available())
-    buf[count++] = Wire.read();
+    I2C_buf[count++] = Wire.read();
 
   uint8_t BREDA_order = order_checking(buf, count);
 

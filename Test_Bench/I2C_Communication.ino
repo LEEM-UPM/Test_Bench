@@ -45,7 +45,14 @@ void requestBreda()
   Wire.requestFrom(BREDA_ADDRESS, 7);
 
   while (Wire.available())
-    I2C_buf[count++] = Wire.read();
+    Breda_buf[count++] = Wire.read();
+  
+  for (int i = 9; i < 65; ++i) {
+    temp_TP.byteP = Breda_buf[i]
+  }
+  for (int i = 65; i <= count; ++i) {
+    temp_TP.byteP = Breda_buf[i]
+  }
 
   uint8_t BREDA_order = order_checking(buf, count);
 

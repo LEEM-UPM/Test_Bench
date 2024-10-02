@@ -154,7 +154,7 @@ float DHT_hum = 0;
 float DHT_temp = 0;
 
 //Breda buffer
-uint8_t I2C_buff[100] = [0];
+uint8_t Breda_buff[100] = [0];
 byteConverter temp_TP[14];
 byteConverter temp_ADC[4];
 

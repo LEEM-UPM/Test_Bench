@@ -32,12 +32,17 @@ void pack_change()
   float_to_byte(DHT_hum, 21);
 
   //Temperature data
-  for (int i = 0; i < 14; i++) {
-    float_to_byte(TP_temp[i], 21+4i);
+  for (int j = 0; j < 14; ++j) {
+    for (int i = 0; i < 4; ++i) {
+        miniPack[21 + i] = temp_TP[j].byteP[i];
+    }
   }
-  for (int i = 0; i < 4; i++) {
-    float_to_byte(ADC_temp[i], 77+4i);
-  } 
+
+  for (int j = 0; j < 4; ++j) {
+    for (int i = 0; i < 4; ++i) {
+        miniPack[77 + i] = temp_ADC[j].byteP[i];
+    }
+  }
 
   // CheckSum
   uint8_t check = 0;

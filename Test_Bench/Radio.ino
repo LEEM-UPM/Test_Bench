@@ -1,6 +1,6 @@
 void data_deliver()
 {
-  RADIO_OUT.write(wholePack, wholePackSize);
+  RADIO_OUT.write(miniPack, miniPackSize);
   RADIO_OUT.flush();
 }
 
@@ -10,7 +10,6 @@ void serial_read()
 
   // Orden detection
   order = order_checking(serialBuffer, length);
-  Serial.println(order);
   if (order == 255) 
     return;
 
@@ -27,14 +26,14 @@ void serial_read()
   obey_order(order);
 }
 
-void send_order(uint8_t order) 
+void send_order(uint8_t order_to_send) 
 { 
   RADIO_OUT.write(serialID, 2);
   RADIO_OUT.write(HERMES_ID);
-  RADIO_OUT.write(order + 3);
+  RADIO_OUT.write(order_to_send + 3);
   RADIO_OUT.write(2);
   RADIO_OUT.write(1);
-  RADIO_OUT.write(order);
+  RADIO_OUT.write(order_to_send);
   RADIO_OUT.write('\n');
   RADIO_OUT.flush();
 }

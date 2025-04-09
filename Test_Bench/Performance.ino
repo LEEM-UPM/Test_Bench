@@ -4,11 +4,10 @@
 
 void iteration()
 {
+  performance(); 
+
   if (performance_status)
   {
-    // Performance
-    performance(); 
-
     // To know the frequency
     #if FREQD == 1 
       ++cell_freq; 
@@ -22,12 +21,6 @@ void iteration()
       }
     #endif    
   }   
-  // If not performing, sends data one time per second 
-  else if ((millis() - last_time) >= 1000) 
-  {
-    last_time = millis();
-    performance();
-  } 
 }
 
 void performance() 
@@ -37,22 +30,8 @@ void performance()
   // Measures sensors
   data_measure();
 
-   // Request data from BREDA
+  // Request data from BREDA
   requestBreda();
-
-  // Sets the pack
-  pack_change();
-
-  // Sends every 4 minipacks
-  for (int i = 0; i < miniPackSize; ++i) 
-    wholePack[i + packPos] = miniPack[i];
-  packPos += miniPackSize;
-
-  if (packPos == wholePackSize)
-  {
-    packPos = 0;
-    data_deliver();  
-  }  
 
   // Writes in SD
   file_data_update();
@@ -60,7 +39,7 @@ void performance()
 
 void performance_started()
 {
-  wholePackSize = miniPackSize * packSize;
+  radio_timer = 20;
   file_open();
 
   transducer_set_high_speed(true);
@@ -69,6 +48,8 @@ void performance_started()
 
 void performance_finished()
 {
+  radio_timer = 1000;
+
   #if SD_READER == 1
     if (!file_closed) 
       file_close();
@@ -79,8 +60,6 @@ void performance_finished()
   
   performance_status = false;
   ignition_started = false;
-  wholePackSize = miniPackSize;
-  packPos = 0;
 
   last_reset_millis = millis();
   last_reset_micros = last_reset_millis / 1000.;
@@ -92,7 +71,7 @@ void performance_finished()
 
 void power_relay(bool status)
 {
-  digitalWrite(PIN_RELAY, !status);
+  digitalWrite(PIN_RELAY, status);
   digitalWrite(PIN_ALARM, status);
 } 
 

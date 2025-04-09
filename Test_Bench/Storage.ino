@@ -8,7 +8,7 @@ void pack_header()
   miniPack[0] = serialID[0];
   miniPack[1] = serialID[1];
   miniPack[2] = serialID[1];
-  miniPack[4] = 20;
+  miniPack[4] = 92;
 }
 
 void pack_change()
@@ -32,22 +32,22 @@ void pack_change()
   float_to_byte(DHT_hum, 21);
 
   //Temperature data
-  for (int j = 0; j < 14; ++j) {
-    for (int i = 0; i < 4; ++i) {
-        miniPack[21 + i] = temp_TP[j].byteP[i];
+  for (int i = 0; i < 14; ++i) {
+    for (int j = 0; j < 4; ++j) {
+        miniPack[25 + i*4 + j] = temp_TP[i].byteP[j];
     }
   }
-
-  for (int j = 0; j < 4; ++j) {
-    for (int i = 0; i < 4; ++i) {
-        miniPack[77 + i] = temp_ADC[j].byteP[i];
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+        miniPack[81 + i*4 + j] = temp_ADC[i].byteP[j];
     }
   }
 
   // CheckSum
   uint8_t check = 0;
 
-  for (int i = 4; i < miniPackSize; ++i) check += miniPack[i];
+  for (int i = 4; i < miniPackSize; ++i) 
+    check += miniPack[i];
   miniPack[3] = check;
 }
 
@@ -56,7 +56,8 @@ void float_to_byte(float var, int pos)
   byteConverter conv;
   conv.floatP = var;
 
-  for (int i = 0; i < 4; ++i) miniPack[pos + i] = conv.byteP[i];
+  for (int i = 0; i < 4; ++i) 
+    miniPack[pos + i] = conv.byteP[i];
 }
 
 //-------------------------------------------------
@@ -88,19 +89,19 @@ void file_data_update()
     // DHT22 data
     RB_data.print(DHT_temp);
     RB_data.print(", ");
-    RB_data.println(DHT_hum);
-    RB_data.print(", ");
+
+    RB_data.print(DHT_hum);
 
     // Temperature data
     for (int i = 0; i < 14; i++) {
-    RB_data.print(temp_TP[i].floatP);
-    RB_data.print(", ");
+      RB_data.print(", ");      
+      RB_data.print(temp_TP[i].floatP);
     }
     for (int i = 0; i < 4; i++) {
-    RB_data.print(temp_ADC[i].floatP);
-    RB_data.print(", ");
+      RB_data.print(", ");      
+      RB_data.print(temp_ADC[i].floatP);
     }
-
+    RB_data.println();   
   #endif
 }
 

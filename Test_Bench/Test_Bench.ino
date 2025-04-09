@@ -22,7 +22,6 @@ void setup()
 
   // Relay
   pinMode(PIN_RELAY, OUTPUT);
-  power_relay(false);
 
   // Alarm
   pinMode(PIN_ALARM, OUTPUT);
@@ -65,7 +64,6 @@ void setup()
     error_warning();
 
   pack_header();  
-  wholePackSize = miniPackSize;
 }
 
 void loop() 
@@ -74,9 +72,19 @@ void loop()
   if (RADIO_OUT.available())
     serial_read();
 
-  // Iteration
+  // Gather data
   if (digitalRead(HX_DOUT)) 
     iteration();
+
+  // Telemetry
+  if ((millis() - last_radio) > radio_timer)
+  {
+    last_radio = millis();
+    // Sets the pack
+    pack_change();
+    // Sends every 4 minipacks
+    data_deliver();
+  }
 
   // Prints the transducer freq
   #if TRANSDUCER == 1 && FREQD == 1

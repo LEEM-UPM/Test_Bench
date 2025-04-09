@@ -87,6 +87,7 @@ uint32_t last_LED = 0;
 uint32_t last_ignition = 0;
 uint32_t last_alarm = 0;
 uint32_t last_transducer_offset = 0;
+uint32_t last_radio = 0;
 
 // Timers
 const uint32_t transducer_timer = 10;
@@ -94,22 +95,19 @@ const uint32_t DHT_timer = 1000;
 const uint32_t ignition_timer = 5000;
 const uint32_t LED_timer = 1000;
 const uint32_t alarm_timer = 1000;
+uint32_t radio_timer = 1000;
 
 // Serial
 const uint16_t serialSize = 500;
 
 uint8_t order = 0;
+uint8_t BREDA_order = 0;
 uint8_t serialBuffer[serialSize] = "";
 uint16_t length = 0;
 
 // Pack deliver
-const uint16_t packSize = 4;
-const uint16_t miniPackSize = 25;
-
-uint16_t wholePackSize = miniPackSize * packSize;
-uint16_t packPos = 0;
+const uint16_t miniPackSize = 97;
 byte miniPack[miniPackSize] = {0};
-byte wholePack[miniPackSize * packSize] = {0};
 
 // SD
 const uint32_t RB_size = 400 * 512;
@@ -153,11 +151,11 @@ bool transducer_offset_activated = false;
 float DHT_hum = 0;
 float DHT_temp = 0;
 
-//Breda buffer
-uint8_t Breda_buff[100] = [0];
+// Breda buffer
+uint8_t Breda_buf[100] = {0};
 byteConverter temp_TP[14];
 byteConverter temp_ADC[4];
-
+uint8_t BREDA_error = 0;
 
 // Ignition variables
 bool ignition_started = false;
@@ -182,6 +180,8 @@ enum radio_orders
   tare,
   errorSD = 20,
   errorSDFile,
+  errorFlash,
+  errorFlashFile,
 };
 
 //-------------------------------------------------
